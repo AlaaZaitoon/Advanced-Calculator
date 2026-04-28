@@ -448,6 +448,22 @@ def _hdr(title: str) -> list[tuple[str, str]]:
     return [_div(), (f"  {title}", "hdr"), _div()]
 
 
+def _bmatrix_latex(M: np.ndarray, prec: int = 4) -> str:
+    """Render a NumPy array as a LaTeX ``bmatrix`` string (no ``$$`` delimiters).
+
+    1-D arrays are rendered as a column vector.  Trailing/leading sign and
+    fixed precision keep matrices visually aligned in Streamlit's KaTeX output.
+    """
+    arr = np.asarray(M, dtype=float)
+    if arr.ndim == 1:
+        arr = arr.reshape(-1, 1)
+    rows = [
+        " & ".join(f"{v:.{prec}f}" for v in row)
+        for row in arr
+    ]
+    return r"\begin{bmatrix}" + r" \\ ".join(rows) + r"\end{bmatrix}"
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  MATRIX HELPERS  (DataFrame ↔ NumPy)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -728,8 +744,8 @@ if "Doolittle" in method or "Gauss" in method:
 
     # ── Pre-fill data based on method
     if "Doolittle" in method:
-        default_A = [[2, -1, -2], [-4, 6, 3], [-4, -2, 8]]
-        default_B = [3, -8, 12]
+        default_A  = [[4, 1, -1], [2, 7, 1], [1, -3, 12]]
+        default_B  = [3, 19, 31]
         default_X0 = None
     else:
         default_A  = [[4, 1, -1], [2, 7, 1], [1, -3, 12]]
@@ -789,31 +805,16 @@ result_payload: dict | None = None
 if calculate:
     with st.spinner("🔄  Calculating…"):
         try:
-            # ─────────────── Doolittle ───────────────────────────────────
+            # ─────────────── Doolittle ────────────────────────
             if "Doolittle" in method:
                 L, U, x = calculator.doolittle_lu_decomposition(A_arr, B_arr)
-                y   = np.linalg.solve(L, B_arr)
-                res = np.linalg.norm(A_arr @ x - B_arr, np.inf)
-
-                rows: list[tuple[str, str]] = []
-                rows += _hdr("Doolittle LU Decomposition") + [("", "")]
-                rows += [("  Strategy:  A = LU  →  Ly = b  →  Ux = y", "key"), ("", "")]
-                rows += _hdr("L  (lower triangular)")
-                rows += [(_fmt_matrix(L), "num"), ("", "")]
-                rows += _hdr("U  (upper triangular)")
-                rows += [(_fmt_matrix(U), "num"), ("", "")]
-                rows += _hdr("y  (forward sub)")
-                rows += [(_fmt_matrix(y), "num"), ("", "")]
-                rows += _hdr("x  (solution)")
-                rows += [(_fmt_matrix(x), "val"), ("", "")]
-                rows += [_div(), (f"  ‖Ax − b‖∞  =  {res:.6e}", "num")]
-                for i, v in enumerate(x):
-                    rows.append((f"  x{i+1}  =  {v:+.10f}", "val"))
+                # y comes from the same factorisation: L y = b
+                y = np.linalg.solve(L, B_arr)
 
                 result_payload = dict(
                     kind="doolittle",
-                    x=x, L=L, U=U, res=res,
-                    steps_html=_steps_html(rows),
+                    A=A_arr.copy(), b=B_arr.copy(),
+                    L=L, U=U, y=y, x=x,
                     fig=_fig_lu_heatmap(L, U),
                     n=len(x),
                 )
@@ -1074,18 +1075,14 @@ with tab_sum:
             st.code(res["traceback"], language="python")
 
     elif res["kind"] == "doolittle":
-        x, res_val, n_val = res["x"], res["res"], res["n"]
+        x, n_val = res["x"], res["n"]
         st.success("✅  **LU Decomposition Solved**")
         cols = st.columns(min(n_val, 4))
         for i, v in enumerate(x):
             with cols[i % len(cols)]:
                 st.metric(label=f"x{i+1}", value=f"{v:+.6f}")
         st.markdown("---")
-        mc1, mc2 = st.columns(2)
-        with mc1:
-            st.metric("System size", f"{n_val} × {n_val}")
-        with mc2:
-            st.metric("Residual ‖Ax−b‖∞", f"{res_val:.3e}")
+        st.metric("System size", f"{n_val} × {n_val}")
 
         st.markdown("**Strategy:**")
         st.latex(r"A = LU \quad\Rightarrow\quad Ly = b \quad\Rightarrow\quad Ux = y")
@@ -1164,6 +1161,77 @@ with tab_steps:
         st.error(res["message"])
         st.code(res["traceback"], language="python")
 
+    elif res["kind"] == "doolittle":
+        # ── Premium LaTeX-rendered walkthrough for Doolittle ────────────────
+        A_d, b_d = res["A"], res["b"]
+        L_d, U_d = res["L"], res["U"]
+        y_d, x_d = res["y"], res["x"]
+        n_d      = res["n"]
+
+        st.markdown("### Doolittle's LU Decomposition — Step-by-Step")
+        st.markdown(
+            "We solve $A\\mathbf{x} = \\mathbf{b}$ in three stages: factor "
+            "$A = LU$ (with $L$ unit-lower-triangular, $U$ upper-triangular), "
+            "forward-solve $L\\mathbf{y} = \\mathbf{b}$, then back-solve "
+            "$U\\mathbf{x} = \\mathbf{y}$."
+        )
+
+        st.markdown("#### Step 1 · Original system")
+        st.latex(
+            rf"A \;=\; {_bmatrix_latex(A_d)}"
+            rf"\qquad \mathbf{{b}} \;=\; {_bmatrix_latex(b_d)}"
+        )
+
+        st.markdown("#### Step 2 · Factor  $A = LU$")
+        col_L, col_U = st.columns(2)
+        with col_L:
+            st.markdown("**Lower triangular  $L$**")
+            st.latex(rf"L \;=\; {_bmatrix_latex(L_d)}")
+        with col_U:
+            st.markdown("**Upper triangular  $U$**")
+            st.latex(rf"U \;=\; {_bmatrix_latex(U_d)}")
+
+        st.markdown("#### Step 3 · Forward substitution  $L\\mathbf{y} = \\mathbf{b}$")
+        st.latex(
+            rf"{_bmatrix_latex(L_d)} \, \mathbf{{y}} \;=\; {_bmatrix_latex(b_d)}"
+            rf" \quad\Longrightarrow\quad \mathbf{{y}} \;=\; {_bmatrix_latex(y_d, prec=6)}"
+        )
+
+        st.markdown("#### Step 4 · Back substitution  $U\\mathbf{x} = \\mathbf{y}$")
+        st.latex(
+            rf"{_bmatrix_latex(U_d)} \, \mathbf{{x}} \;=\; {_bmatrix_latex(y_d, prec=6)}"
+            rf" \quad\Longrightarrow\quad \mathbf{{x}} \;=\; {_bmatrix_latex(x_d, prec=6)}"
+        )
+
+        st.markdown("#### Solution")
+        sol_cols = st.columns(min(n_d, 4))
+        for i, v in enumerate(x_d):
+            with sol_cols[i % len(sol_cols)]:
+                st.metric(label=f"x{i+1}", value=f"{v:+.6f}")
+
+        with st.expander("Numeric details · full precision"):
+            col_l_df, col_u_df = st.columns(2)
+            with col_l_df:
+                st.markdown("**$L$**")
+                df_L = pd.DataFrame(
+                    L_d, columns=[f"c{i+1}" for i in range(n_d)],
+                )
+                st.dataframe(df_L.style.format("{:.6f}"),
+                             use_container_width=True)
+            with col_u_df:
+                st.markdown("**$U$**")
+                df_U = pd.DataFrame(
+                    U_d, columns=[f"c{i+1}" for i in range(n_d)],
+                )
+                st.dataframe(df_U.style.format("{:.6f}"),
+                             use_container_width=True)
+            df_yx = pd.DataFrame({
+                "y (forward sub)":  y_d,
+                "x (back sub)":     x_d,
+            })
+            st.dataframe(df_yx.style.format("{:.10f}"),
+                         use_container_width=True)
+
     else:
         # Coloured monospaced output
         st.markdown(res.get("steps_html", ""), unsafe_allow_html=True)
@@ -1196,26 +1264,6 @@ with tab_steps:
                 use_container_width=True,
             )
 
-        # LU factor matrices as DataFrames
-        if res["kind"] == "doolittle":
-            st.markdown("#### Factor Matrices")
-            col_l, col_u = st.columns(2)
-            with col_l:
-                st.markdown("**L  (lower triangular)**")
-                df_L = pd.DataFrame(
-                    res["L"],
-                    columns=[f"c{i+1}" for i in range(res["n"])],
-                )
-                st.dataframe(df_L.style.format("{:.6f}"),
-                             use_container_width=True)
-            with col_u:
-                st.markdown("**U  (upper triangular)**")
-                df_U = pd.DataFrame(
-                    res["U"],
-                    columns=[f"c{i+1}" for i in range(res["n"])],
-                )
-                st.dataframe(df_U.style.format("{:.6f}"),
-                             use_container_width=True)
 
 # ─── TAB 3: Visualization ────────────────────────────────────────────────────
 with tab_vis:
