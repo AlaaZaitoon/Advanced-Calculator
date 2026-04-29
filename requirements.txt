@@ -1,0 +1,10 @@
+# ──────────────────────────────────────────────────────────────────────
+#  Advanced Numerical Calculator — Python dependencies
+#  Install with:  pip install -r requirements.txt
+#  Run with:      streamlit run app.py
+# ──────────────────────────────────────────────────────────────────────
+streamlit>=1.36,<2
+streamlit-option-menu>=0.3.13
+numpy>=1.24
+pandas>=2.0
+plotly>=5.17

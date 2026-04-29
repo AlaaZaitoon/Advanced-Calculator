@@ -1,0 +1,23 @@
+# ════════════════════════════════════════════════════════════════════════════
+#  Advanced Numerical Calculator — Streamlit theme & runtime configuration
+#  Aesthetic : "Calm Midnight" — deep navy backdrop, soft cyan / violet accents.
+# ════════════════════════════════════════════════════════════════════════════
+
+[theme]
+base                     = "dark"
+primaryColor             = "#7DD3FC"   # soft cyan — primary accent
+backgroundColor          = "#0B1220"   # deep midnight navy
+secondaryBackgroundColor = "#0F1A2E"   # elevated surface (sidebar / cards)
+textColor                = "#E6EDF7"   # near-white, low-glare on dark
+font                     = "sans serif"
+
+[client]
+# Hide Streamlit's deploy / hamburger menu chrome for a white-label feel.
+toolbarMode      = "minimal"
+showErrorDetails = true
+
+[browser]
+gatherUsageStats = false
+
+[server]
+runOnSave = true

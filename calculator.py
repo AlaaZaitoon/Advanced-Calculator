@@ -136,7 +136,7 @@ def gauss_seidel(
     x0:            np.ndarray | list | None = None,
     tolerance:     float = 1e-6,
     max_iterations: int  = 1000,
-) -> tuple[np.ndarray, int, bool]:
+) -> tuple[np.ndarray, int, bool, list[np.ndarray]]:
     """Solve **A x = b** iteratively with the Gauss-Seidel method.
 
     Parameters
@@ -149,9 +149,11 @@ def gauss_seidel(
 
     Returns
     -------
-    x          : ndarray — solution vector at termination
-    iterations : int     — number of iterations performed
-    converged  : bool    — True if tolerance was reached before the cap
+    x          : ndarray              — solution vector at termination
+    iterations : int                  — number of iterations performed
+    converged  : bool                 — True if tolerance was reached before the cap
+    history    : list[ndarray]        — copy of *x* after each iteration
+                                        (``history[k-1]`` ≡ state after iteration *k*)
     """
     A = np.asarray(A, dtype=float)
     b = np.asarray(b, dtype=float).ravel()
@@ -177,6 +179,8 @@ def gauss_seidel(
     # Pre-compute reciprocals of the diagonal to avoid repeated division
     diag_inv = 1.0 / np.diag(A)
 
+    history: list[np.ndarray] = []
+
     for iteration in range(1, max_iterations + 1):
         x_prev = x.copy()
         for i in range(n):
@@ -184,10 +188,12 @@ def gauss_seidel(
             sigma = A[i, :i] @ x[:i] + A[i, i + 1:] @ x[i + 1:]
             x[i]  = (b[i] - sigma) * diag_inv[i]
 
-        if np.linalg.norm(x - x_prev, ord=np.inf) < tolerance:
-            return x, iteration, True
+        history.append(x.copy())
 
-    return x, max_iterations, False
+        if np.linalg.norm(x - x_prev, ord=np.inf) < tolerance:
+            return x, iteration, True, history
+
+    return x, max_iterations, False, history
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -199,22 +205,33 @@ def false_position(
     b:             float,
     tolerance:     float = 1e-6,
     max_iterations: int  = 100,
-) -> tuple[float, int]:
+) -> tuple[float, int, list[dict]]:
     """Find a root of *f* on **[a, b]** using the False-Position method.
 
     Requires a sign change: ``f(a) · f(b) < 0``.
+
+    Stopping criterion is the **absolute step size**
+    :math:`|x_n - x_{n-1}| < \\text{tolerance}` (checked from iteration 2
+    onwards).  This matches the textbook / lecture formulation where the
+    method is run until the successive root estimates differ by less than
+    the requested precision.
 
     Parameters
     ----------
     f             : callable     — scalar function f(x)
     a, b          : float        — bracket endpoints (f(a) and f(b) opposite sign)
-    tolerance     : float        — |f(c)| stopping criterion
+    tolerance     : float        — |xₙ − xₙ₋₁| stopping criterion
     max_iterations: int          — hard iteration cap
 
     Returns
     -------
-    root       : float — approximated root
-    iterations : int   — iterations performed
+    root       : float       — approximated root
+    iterations : int         — iterations performed
+    history    : list[dict]  — per-iteration record with keys
+                               ``a, b, fa, fb, x, fx, err`` where ``err`` is
+                               ``|xₙ − xₙ₋₁|`` (``None`` for the first
+                               iteration).  All values are float, computed
+                               in native double precision (≥15 sig. digits).
     """
     fa, fb = f(a), f(b)
     if fa * fb >= 0:
@@ -223,28 +240,42 @@ def false_position(
             "Ensure the interval brackets a root."
         )
 
-    c = a  # initialise so we always have a valid return value
+    history: list[dict] = []
+    c        = a   # initialise so we always have a valid return value
+    c_prev: float | None = None
+
     for iteration in range(1, max_iterations + 1):
         fa, fb = f(a), f(b)
 
         denom = fb - fa
         if abs(denom) < _EPS:
             # Numerically degenerate — return best estimate so far
-            return c, iteration
+            return c, iteration, history
 
         c  = (a * fb - b * fa) / denom
         fc = f(c)
+        err = None if c_prev is None else abs(c - c_prev)
 
-        if abs(fc) < tolerance:
-            return c, iteration
+        history.append({
+            "a":  float(a),  "b":  float(b),
+            "fa": float(fa), "fb": float(fb),
+            "x":  float(c),  "fx": float(fc),
+            "err": (None if err is None else float(err)),
+        })
 
-        # Update bracket (Illinois / standard Regula Falsi)
+        # Stop when successive estimates agree to the requested precision
+        if err is not None and err < tolerance:
+            return c, iteration, history
+
+        # Update bracket (standard Regula Falsi)
         if fa * fc < 0:
             b = c
         else:
             a = c
 
-    return c, max_iterations
+        c_prev = c
+
+    return c, max_iterations, history
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -256,21 +287,38 @@ def newton_raphson(
     x0:            float,
     tolerance:     float = 1e-6,
     max_iterations: int  = 100,
-) -> tuple[float, int]:
+) -> tuple[float, int, list[dict]]:
     """Find a root of *f* near *x0* using the Newton-Raphson method.
+
+    The algorithm evaluates the user-supplied derivative ``f_prime`` at each
+    iterate and uses
+
+    .. math::
+
+        x_n \\;=\\; x_{n-1} \\;-\\; \\frac{f(x_{n-1})}{f'(x_{n-1})}
+
+    Stopping criterion is the **absolute step size**
+    :math:`|x_n - x_{n-1}| < \\text{tolerance}`.
 
     Parameters
     ----------
     f             : callable — function f(x)
     f_prime       : callable — derivative f′(x)
     x0            : float    — initial guess
-    tolerance     : float    — stopping criterion  |xₙ₊₁ − xₙ| < tolerance
+    tolerance     : float    — stopping criterion  |xₙ − xₙ₋₁| < tolerance
     max_iterations: int      — hard iteration cap
 
     Returns
     -------
-    root       : float — approximated root
-    iterations : int   — iterations performed
+    root       : float       — approximated root
+    iterations : int         — iterations performed
+                                (= ``len(history) - 1``)
+    history    : list[dict]  — one entry per iterate, starting with the
+                                initial guess.  Each entry has keys
+                                ``x, fx, fpx, err`` where ``err`` is
+                                ``|xₙ − xₙ₋₁|`` (``None`` for the initial
+                                guess).  All values are float, computed in
+                                native double precision (≥15 sig. digits).
 
     Raises
     ------
@@ -278,11 +326,15 @@ def newton_raphson(
         If f′(x) ≈ 0 during an iteration, making the step undefined.
     """
     x = float(x0)
+    fx, fpx = f(x), f_prime(x)
+    history: list[dict] = [{
+        "x":   float(x),
+        "fx":  float(fx),
+        "fpx": float(fpx),
+        "err": None,
+    }]
 
     for iteration in range(1, max_iterations + 1):
-        fx  = f(x)
-        fpx = f_prime(x)
-
         if abs(fpx) < _EPS:
             raise ZeroDivisionError(
                 f"Derivative f′({x:.6g}) ≈ 0 at iteration {iteration}.  "
@@ -290,13 +342,23 @@ def newton_raphson(
             )
 
         x_next = x - fx / fpx
+        err    = abs(x_next - x)
 
-        if abs(x_next - x) < tolerance or abs(f(x_next)) < tolerance:
-            return x_next, iteration
+        fx_next  = f(x_next)
+        fpx_next = f_prime(x_next)
+        history.append({
+            "x":   float(x_next),
+            "fx":  float(fx_next),
+            "fpx": float(fpx_next),
+            "err": float(err),
+        })
 
-        x = x_next
+        if err < tolerance:
+            return x_next, iteration, history
 
-    return x, max_iterations
+        x, fx, fpx = x_next, fx_next, fpx_next
+
+    return x, max_iterations, history
 
 
 # ─────────────────────────────────────────────────────────────────────────────
