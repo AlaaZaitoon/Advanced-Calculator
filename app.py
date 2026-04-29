@@ -103,14 +103,17 @@ st.markdown(
         --shadow-card   : 0 1px 2px rgba(0,0,0,0.35), 0 8px 28px rgba(0,0,0,0.28);
     }
 
+    /* ── Base styles (Mobile default — no query) ── */
+
     /* ── Global typography & body backdrop ───────────────────────────── */
+    /* FIXED: Added fluid clamp() for body text to ensure readability on small screens */
     html, body, [data-testid="stAppViewContainer"], .stApp {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-                     Roboto, sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         color: var(--text);
+        font-size: clamp(0.875rem, 2vw, 1rem); 
         background:
-            radial-gradient(1200px 600px at 12% -10%, #14213B 0%, transparent 60%),
-            radial-gradient(900px 500px at 110% 110%, #1A1240 0%, transparent 55%),
+            radial-gradient(120vw 60vh at 12% -10%, #14213B 0%, transparent 60%),
+            radial-gradient(90vw 50vh at 110% 110%, #1A1240 0%, transparent 55%),
             linear-gradient(180deg, #0B1220 0%, #0A1020 100%);
         background-attachment: fixed;
         letter-spacing: 0.005em;
@@ -118,17 +121,59 @@ st.markdown(
     body { font-feature-settings: "ss01", "cv11"; }
 
     /* ── Hide default Streamlit chrome (white-label look) ────────────── */
-    #MainMenu, header[data-testid="stHeader"], footer,
-    [data-testid="stToolbar"], [data-testid="stDecoration"],
-    [data-testid="stStatusWidget"] { display: none !important; visibility: hidden; }
-    .stApp > header { background: transparent; }
+    #MainMenu, footer { display: none !important; visibility: hidden; }
+    
+    [data-testid="stToolbarActions"], [data-testid="stDecoration"], [data-testid="stStatusWidget"] { 
+        visibility: hidden !important; 
+    }
+
+    /* Force the Header to be structural but invisible and pass through clicks */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        pointer-events: none !important;
+    }
+    
+    /* Ensure children of the header can still be clicked */
+    header[data-testid="stHeader"] * {
+        pointer-events: auto !important;
+    }
+
+    /* Force the Open Arrow to be visible, clickable, and on top of everything */
+    /* FIXED: Adjusted touch target sizing (padding: 0.5rem) and positioning with rems */
+    [data-testid="collapsedControl"] {
+        visibility: visible !important;
+        display: flex !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        position: fixed !important;
+        top: 0.625rem;
+        left: 0.625rem;
+        z-index: 1000000 !important;
+        min-width: 44px;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Ensure the Close Arrow inside the sidebar is also visible */
+    [data-testid="stSidebarCollapseButton"] {
+        visibility: visible !important;
+        display: flex !important;
+        z-index: 1000000 !important;
+        min-width: 44px;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+    }
 
     /* ── Main content padding & subtle fade-in ───────────────────────── */
+    /* FIXED: Changed to mobile-first default padding, expanding in media queries */
     [data-testid="stMain"] .block-container,
     .main .block-container {
-        padding-top: 2.4rem !important;
-        padding-bottom: 5rem !important;
-        max-width: 1280px;
+        padding-top: 1.4rem !important;
+        padding-bottom: 3rem !important;
+        width: 100%;
+        max-width: 100%;
         animation: fadeUp 0.45s ease-out both;
     }
     @keyframes fadeUp {
@@ -137,22 +182,25 @@ st.markdown(
     }
 
     /* ── Custom scrollbar ────────────────────────────────────────────── */
-    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar { width: 0.625rem; height: 0.625rem; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb {
-        background: #1F2D4A; border-radius: 10px;
+        background: #1F2D4A; border-radius: 0.625rem;
         border: 2px solid transparent; background-clip: padding-box;
     }
     ::-webkit-scrollbar-thumb:hover { background: #2A3A5C; background-clip: padding-box; }
 
     /* ── Headings & links ────────────────────────────────────────────── */
+    /* FIXED: Applied fluid typography with clamp() for all headings */
     h1, h2, h3, h4, h5 {
         font-family: 'Inter', sans-serif;
         font-weight: 700;
         letter-spacing: -0.012em;
         color: var(--text);
     }
-    h1 { font-weight: 800; }
+    h1 { font-weight: 800; font-size: clamp(1.8rem, 5vw, 2.5rem); }
+    h2 { font-size: clamp(1.5rem, 4vw, 2rem); }
+    h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
     a, a:visited { color: var(--accent); text-decoration: none; }
     a:hover { color: var(--accent-strong); }
 
@@ -160,12 +208,14 @@ st.markdown(
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0C1426 0%, #0A1020 100%);
         border-right: 1px solid var(--border-soft);
+        width: 100% !important; /* Mobile auto-collapse */
+        max-width: 100%;
     }
     [data-testid="stSidebar"] .stSelectbox label,
     [data-testid="stSidebar"] .stSlider label,
     [data-testid="stSidebar"] .stNumberInput label,
     [data-testid="stSidebar"] .stTextInput label {
-        font-size: 0.72rem;
+        font-size: clamp(0.7rem, 1.5vw, 0.72rem);
         text-transform: uppercase;
         letter-spacing: 0.1em;
         color: var(--text-muted);
@@ -173,15 +223,19 @@ st.markdown(
     }
     [data-testid="stSidebar"] hr { border-color: var(--border-soft); }
 
-    /* ── Inputs (number/text) ────────────────────────────────────────── */
+    /* ── Forms & Inputs (number/text) ────────────────────────────────── */
+    /* FIXED: Prevent iOS auto-zoom by enforcing font-size >= 16px (1rem). Set width to 100%. Min-height for touch targets. */
     .stTextInput > div > div input,
     .stNumberInput > div > div input,
     [data-baseweb="input"] input {
         background: var(--bg-elevated) !important;
         border: 1px solid var(--border) !important;
-        border-radius: 10px !important;
+        border-radius: 0.625rem !important;
         color: var(--text) !important;
         font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+        font-size: 1rem !important; /* 16px min */
+        min-height: 44px;
+        width: 100%;
         transition: border-color 0.18s, box-shadow 0.18s;
     }
     .stTextInput > div > div:focus-within input,
@@ -193,33 +247,42 @@ st.markdown(
         background: var(--surface) !important;
         border: 1px solid var(--border) !important;
         color: var(--text-muted) !important;
+        min-height: 44px;
+        min-width: 44px;
     }
 
     /* ── Selectbox / dropdown popovers ───────────────────────────────── */
     [data-baseweb="select"] > div {
         background: var(--bg-elevated) !important;
         border: 1px solid var(--border) !important;
-        border-radius: 10px !important;
+        border-radius: 0.625rem !important;
+        min-height: 44px;
     }
-    [data-baseweb="popover"] { border-radius: 12px; box-shadow: var(--shadow-card); }
+    [data-baseweb="popover"] { border-radius: 0.75rem; box-shadow: var(--shadow-card); }
 
     /* ── Tabs — modern pill / underline hybrid ───────────────────────── */
+    /* FIXED: Removed fixed px height, added rems and min-height 44px */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
+        gap: 0.25rem;
         border-bottom: 1px solid var(--border-soft);
-        padding-bottom: 2px;
+        padding-bottom: 0.125rem;
         background: transparent;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 44px;
-        padding: 0 20px;
-        border-radius: 10px 10px 0 0;
-        font-size: 0.92rem;
+        min-height: 44px;
+        padding: 0 1.25rem;
+        border-radius: 0.625rem 0.625rem 0 0;
+        font-size: clamp(0.85rem, 2vw, 0.92rem);
         font-weight: 500;
         color: var(--text-muted);
         background: transparent;
         border: none;
         position: relative;
+        white-space: nowrap;
         transition: color 0.18s, background 0.18s;
     }
     .stTabs [data-baseweb="tab"]:hover {
@@ -233,7 +296,7 @@ st.markdown(
     .stTabs [data-baseweb="tab"][aria-selected="true"]::after {
         content: "";
         position: absolute;
-        left: 16px; right: 16px; bottom: -2px;
+        left: 1rem; right: 1rem; bottom: -2px;
         height: 2px; border-radius: 2px;
         background: linear-gradient(90deg, var(--accent), var(--accent-violet));
     }
@@ -242,11 +305,12 @@ st.markdown(
     }
 
     /* ── Metric cards ────────────────────────────────────────────────── */
+    /* FIXED: Swapped px padding for rems, clamp() on metric value */
     [data-testid="stMetric"], [data-testid="metric-container"] {
         background: linear-gradient(180deg, var(--surface) 0%, #111B33 100%);
         border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 16px 20px;
+        border-radius: 0.875rem;
+        padding: 1rem 1.25rem;
         box-shadow: var(--shadow-soft);
         transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
     }
@@ -256,22 +320,25 @@ st.markdown(
         transform: translateY(-1px);
     }
     [data-testid="stMetricLabel"] {
-        font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em;
+        font-size: clamp(0.65rem, 1.5vw, 0.72rem); text-transform: uppercase; letter-spacing: 0.12em;
         color: var(--text-muted); font-weight: 600;
     }
     [data-testid="stMetricValue"] {
-        font-size: 1.6rem; font-weight: 700;
+        font-size: clamp(1.25rem, 4vw, 1.6rem); font-weight: 700;
         font-family: 'JetBrains Mono', monospace;
         color: var(--text);
     }
 
-    /* ── Dataframes ──────────────────────────────────────────────────── */
+    /* ── Dataframes & Tables ─────────────────────────────────────────── */
+    /* FIXED: Enforce mobile horizontal scrolling and max-width 100% */
     [data-testid="stDataFrame"], [data-testid="stTable"] {
-        border-radius: 12px;
-        overflow: hidden;
+        border-radius: 0.75rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-soft);
         background: var(--bg-elevated);
+        max-width: 100%;
     }
     [data-testid="stDataFrame"] [role="columnheader"] {
         background: #0E1729 !important;
@@ -280,19 +347,21 @@ st.markdown(
     }
 
     /* ── Expanders ───────────────────────────────────────────────────── */
+    /* FIXED: Replaced px padding/margins with rem */
     [data-testid="stExpander"] {
         background: var(--bg-elevated);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: 0.75rem;
         box-shadow: var(--shadow-soft);
-        margin: 10px 0;
+        margin: 0.625rem 0;
         overflow: hidden;
     }
     [data-testid="stExpander"] details > summary {
-        padding: 12px 18px;
+        padding: 0.75rem 1.125rem;
         font-weight: 600;
         color: var(--text);
         background: linear-gradient(90deg, #142036 0%, #0E1729 100%);
+        min-height: 44px;
     }
     [data-testid="stExpander"] details > summary:hover {
         background: linear-gradient(90deg, #182846 0%, #11203A 100%);
@@ -302,31 +371,34 @@ st.markdown(
     [data-testid="stMain"] .katex-display {
         background: var(--bg-elevated);
         border: 1px solid var(--border-soft);
-        border-radius: 12px;
-        padding: 14px 18px;
-        margin: 12px 0;
+        border-radius: 0.75rem;
+        padding: 0.875rem 1.125rem;
+        margin: 0.75rem 0;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         box-shadow: var(--shadow-soft);
     }
-    .katex { color: var(--text) !important; font-size: 1.06em; }
+    .katex { color: var(--text) !important; font-size: clamp(0.9em, 2.5vw, 1.06em); }
 
     /* ── Alert boxes (info / success / warning / error) ──────────────── */
     [data-testid="stAlert"] {
-        border-radius: 12px;
+        border-radius: 0.75rem;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-soft);
     }
 
     /* ── Step-by-step monospaced output ──────────────────────────────── */
+    /* FIXED: Fluid padding and clamp() typography for step-by-step blocks */
     .calc-steps {
         font-family: 'JetBrains Mono', 'Fira Code', monospace;
-        font-size: 0.85rem;
+        font-size: clamp(0.75rem, 2vw, 0.85rem);
         line-height: 1.7;
         background: var(--bg-elevated);
         border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 20px 24px;
+        border-radius: 0.75rem;
+        padding: 1.25rem 1.5rem;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         white-space: pre;
         color: var(--text);
         box-shadow: var(--shadow-soft);
@@ -344,13 +416,13 @@ st.markdown(
     /* ── Method info pill (in sidebar method card) ───────────────────── */
     .method-pill {
         display: inline-block;
-        padding: 4px 12px;
+        padding: 0.25rem 0.75rem;
         border-radius: 999px;
-        font-size: 0.7rem;
+        font-size: clamp(0.6rem, 1.5vw, 0.7rem);
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        margin-right: 8px;
+        margin-right: 0.5rem;
     }
     .pill-direct        { background: rgba(52, 211, 153, 0.10); border: 1px solid rgba(52, 211, 153, 0.55); color: #6EE7B7; }
     .pill-iterative     { background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.55); color: #FCD34D; }
@@ -359,16 +431,18 @@ st.markdown(
     .pill-interpolation { background: rgba(56, 189, 248, 0.10); border: 1px solid rgba(56, 189, 248, 0.55); color: #38BDF8; }
 
     /* ── Calculate (primary) button ──────────────────────────────────── */
+    /* FIXED: Fluid font, rem padding, explicit min-height */
     .stButton > button[kind="primary"] {
         width: 100%;
         background: linear-gradient(135deg, var(--accent-strong), var(--accent-violet-strong));
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
+        border-radius: 0.75rem;
         color: #0B1220;
-        font-size: 0.98rem;
+        font-size: clamp(0.9rem, 2.5vw, 0.98rem);
         font-weight: 700;
         letter-spacing: 0.04em;
-        padding: 13px 0;
+        padding: 0.8rem 0;
+        min-height: 44px;
         box-shadow: 0 6px 22px rgba(56, 189, 248, 0.25);
         transition: transform 0.15s, box-shadow 0.18s, filter 0.18s;
     }
@@ -384,7 +458,8 @@ st.markdown(
         background: var(--surface);
         border: 1px solid var(--border);
         color: var(--text);
-        border-radius: 10px;
+        border-radius: 0.625rem;
+        min-height: 44px;
         transition: border-color 0.18s, background 0.18s;
     }
     .stButton > button:not([kind="primary"]):hover {
@@ -394,21 +469,22 @@ st.markdown(
 
     /* ── Section labels (sidebar) ────────────────────────────────────── */
     .section-label {
-        font-size: 0.7rem;
+        font-size: clamp(0.6rem, 1.5vw, 0.7rem);
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.14em;
         color: var(--text-muted);
-        margin: 22px 0 8px 0;
-        padding-bottom: 6px;
+        margin: 1.375rem 0 0.5rem 0;
+        padding-bottom: 0.375rem;
         border-bottom: 1px solid var(--border-soft);
     }
 
     /* ── Headline gradient on the main page title ────────────────────── */
+    /* FIXED: Fluid clamp scaling for titles and logos */
     .anc-title {
-        font-size: 1.9rem;
+        font-size: clamp(1.4rem, 4vw, 1.9rem);
         font-weight: 800;
-        margin: 0 0 4px 0;
+        margin: 0 0 0.25rem 0;
         letter-spacing: -0.02em;
         background: linear-gradient(120deg, #E6EDF7 0%, #7DD3FC 55%, #A78BFA 100%);
         -webkit-background-clip: text;
@@ -417,7 +493,7 @@ st.markdown(
     }
     .anc-subtitle {
         color: var(--text-muted);
-        font-size: 0.88rem;
+        font-size: clamp(0.75rem, 2vw, 0.88rem);
         margin: 0;
         letter-spacing: 0.01em;
     }
@@ -426,25 +502,25 @@ st.markdown(
     .method-header-card {
         background: linear-gradient(135deg, rgba(19, 31, 56, 0.85), rgba(15, 26, 46, 0.55));
         border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 14px 18px;
-        margin-top: 6px;
+        border-radius: 0.875rem;
+        padding: 0.875rem 1.125rem;
+        margin-top: 0.375rem;
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         box-shadow: var(--shadow-soft);
     }
     .method-header-card .mhc-name {
-        font-size: 0.9rem; font-weight: 600; color: var(--text);
+        font-size: clamp(0.8rem, 2vw, 0.9rem); font-weight: 600; color: var(--text);
     }
 
     /* ── Sidebar identity card (logo + product name) ─────────────────── */
     .anc-brand {
         text-align: center;
-        padding: 14px 6px 10px 6px;
-        margin-bottom: 6px;
+        padding: 0.875rem 0.375rem 0.625rem 0.375rem;
+        margin-bottom: 0.375rem;
     }
     .anc-brand .anc-logo {
-        font-size: 2.2rem;
+        font-size: clamp(1.6rem, 5vw, 2.2rem);
         background: linear-gradient(135deg, #7DD3FC, #A78BFA);
         -webkit-background-clip: text; background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -452,38 +528,38 @@ st.markdown(
     }
     .anc-brand .anc-name {
         display: block;
-        font-size: 1.02rem;
+        font-size: clamp(0.9rem, 2.5vw, 1.02rem);
         font-weight: 700;
         color: var(--text);
-        margin-top: 2px;
+        margin-top: 0.125rem;
         letter-spacing: 0.005em;
     }
     .anc-brand .anc-tag {
         display: block;
-        font-size: 0.72rem;
+        font-size: clamp(0.6rem, 1.5vw, 0.72rem);
         color: var(--text-muted);
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        margin-top: 2px;
+        margin-top: 0.125rem;
     }
 
     /* ── Method info card body (description + complexity row) ───────── */
     .method-info-card {
         background: linear-gradient(180deg, var(--surface) 0%, #101A30 100%);
         border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 14px 16px;
-        margin: 12px 0 6px 0;
+        border-radius: 0.75rem;
+        padding: 0.875rem 1rem;
+        margin: 0.75rem 0 0.375rem 0;
         box-shadow: var(--shadow-soft);
     }
     .method-info-card .mic-meta {
-        font-size: 0.7rem;
+        font-size: clamp(0.6rem, 1.5vw, 0.7rem);
         color: var(--text-dim);
         letter-spacing: 0.06em;
     }
     .method-info-card .mic-desc {
-        margin: 8px 0 0 0;
-        font-size: 0.82rem;
+        margin: 0.5rem 0 0 0;
+        font-size: clamp(0.75rem, 2vw, 0.82rem);
         color: var(--text-muted);
         line-height: 1.55;
     }
@@ -491,21 +567,22 @@ st.markdown(
     /* ── Sidebar footer (version line) ───────────────────────────────── */
     .anc-footer {
         text-align: center;
-        font-size: 0.68rem;
+        font-size: clamp(0.55rem, 1.5vw, 0.68rem);
         color: var(--text-dim);
         letter-spacing: 0.1em;
-        margin-top: 22px;
-        padding-top: 14px;
+        margin-top: 1.375rem;
+        padding-top: 0.875rem;
         border-top: 1px solid var(--border-soft);
     }
 
     /* ── Plotly chart wrappers — soft framed cards ───────────────────── */
     [data-testid="stPlotlyChart"] {
-        border-radius: 14px;
+        border-radius: 0.875rem;
         overflow: hidden;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-soft);
         background: var(--bg-elevated);
+        max-width: 100%;
     }
 
     /* ── Divider tint ────────────────────────────────────────────────── */
@@ -514,10 +591,33 @@ st.markdown(
     /* ── Selection colour ────────────────────────────────────────────── */
     ::selection { background: rgba(125, 211, 252, 0.32); color: var(--text); }
 
-    /* ── Mobile spacing tweak ────────────────────────────────────────── */
-    @media (max-width: 768px) {
-        [data-testid="stMain"] .block-container { padding-top: 1.4rem !important; }
-        .anc-title { font-size: 1.55rem; }
+    /* ── Images ──────────────────────────────────────────────────────── */
+    /* FIXED: Global image responsive rules */
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    /* ── Tablet: 768px and up ── */
+    @media (min-width: 768px) {
+        [data-testid="stSidebar"] {
+            width: auto !important; /* Allow sidebar its natural width on tablet+ */
+        }
+        [data-testid="stMain"] .block-container,
+        .main .block-container {
+            padding-top: 2rem !important;
+        }
+    }
+
+    /* ── Desktop: 1025px and up ── */
+    @media (min-width: 1025px) {
+        [data-testid="stMain"] .block-container,
+        .main .block-container {
+            padding-top: 2.4rem !important;
+            padding-bottom: 5rem !important;
+            max-width: 1280px;
+        }
     }
     </style>
     """,
