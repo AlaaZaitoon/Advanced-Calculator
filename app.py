@@ -36,6 +36,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as _stc
 
 try:
     import calculator
@@ -139,7 +140,6 @@ st.markdown(
     }
 
     /* Force the Open Arrow to be visible, clickable, and on top of everything */
-    /* FIXED: Adjusted touch target sizing (padding: 0.5rem) and positioning with rems */
     [data-testid="collapsedControl"] {
         visibility: visible !important;
         display: flex !important;
@@ -149,10 +149,16 @@ st.markdown(
         top: 0.625rem;
         left: 0.625rem;
         z-index: 1000000 !important;
-        min-width: 44px;
-        min-height: 44px;
+        min-width: 48px;
+        min-height: 48px;
         align-items: center;
         justify-content: center;
+        background: rgba(11, 18, 32, 0.92);
+        border-radius: 0.625rem;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--border-soft);
+        box-shadow: var(--shadow-soft);
     }
 
     /* Ensure the Close Arrow inside the sidebar is also visible */
@@ -160,8 +166,8 @@ st.markdown(
         visibility: visible !important;
         display: flex !important;
         z-index: 1000000 !important;
-        min-width: 44px;
-        min-height: 44px;
+        min-width: 48px;
+        min-height: 48px;
         align-items: center;
         justify-content: center;
     }
@@ -208,8 +214,8 @@ st.markdown(
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0C1426 0%, #0A1020 100%);
         border-right: 1px solid var(--border-soft);
-        width: 100% !important; /* Mobile auto-collapse */
-        max-width: 100%;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     [data-testid="stSidebar"] .stSelectbox label,
     [data-testid="stSidebar"] .stSlider label,
@@ -258,7 +264,7 @@ st.markdown(
         border-radius: 0.625rem !important;
         min-height: 44px;
     }
-    [data-baseweb="popover"] { border-radius: 0.75rem; box-shadow: var(--shadow-card); }
+    [data-baseweb="popover"] { border-radius: 0.75rem; box-shadow: var(--shadow-card); z-index: 999999 !important; }
 
     /* ── Tabs — modern pill / underline hybrid ───────────────────────── */
     /* FIXED: Removed fixed px height, added rems and min-height 44px */
@@ -599,10 +605,87 @@ st.markdown(
         display: block;
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       RESPONSIVE BREAKPOINTS  —  mobile-first
+       ══════════════════════════════════════════════════════════════════ */
+
+    /* ── Mobile only: below 768px ── */
+    @media (max-width: 767px) {
+        /* Sidebar takes full screen width on mobile */
+        [data-testid="stSidebar"] {
+            width: 100% !important;
+            max-width: 100%;
+        }
+
+        /* Stack all columns vertically in the main area */
+        [data-testid="stMain"] [data-testid="stHorizontalBlock"] {
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+        }
+        [data-testid="stMain"] [data-testid="stHorizontalBlock"] > div {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        /* Tighter main content padding */
+        [data-testid="stMain"] .block-container,
+        .main .block-container {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
+
+        /* Smaller tab padding for narrow screens */
+        .stTabs [data-baseweb="tab"] {
+            padding: 0 0.625rem;
+            font-size: 0.8rem;
+        }
+
+        /* Tighter metric cards */
+        [data-testid="stMetric"], [data-testid="metric-container"] {
+            padding: 0.75rem 1rem;
+        }
+
+        /* KaTeX blocks: less padding on mobile */
+        [data-testid="stMain"] .katex-display {
+            padding: 0.5rem 0.625rem;
+            margin: 0.5rem 0;
+        }
+
+        /* Step-by-step blocks tighter on mobile */
+        .calc-steps {
+            padding: 0.75rem 0.875rem;
+            font-size: 0.73rem;
+        }
+
+        /* Method header card stacks nicely */
+        .method-header-card {
+            margin-top: 0.5rem;
+        }
+
+        /* Title sizing for small screens */
+        .anc-title {
+            font-size: clamp(1.1rem, 5vw, 1.5rem);
+        }
+        .anc-subtitle {
+            font-size: clamp(0.68rem, 2vw, 0.82rem);
+        }
+
+        /* Plotly chart wrapper tighter */
+        [data-testid="stPlotlyChart"] {
+            border-radius: 0.625rem;
+        }
+
+        /* Expander tighter padding */
+        [data-testid="stExpander"] details > summary {
+            padding: 0.625rem 0.875rem;
+        }
+    }
+
     /* ── Tablet: 768px and up ── */
     @media (min-width: 768px) {
         [data-testid="stSidebar"] {
-            width: auto !important; /* Allow sidebar its natural width on tablet+ */
+            width: auto !important;
         }
         [data-testid="stMain"] .block-container,
         .main .block-container {
@@ -1985,13 +2068,17 @@ with st.sidebar:
         st.session_state["method"] = method
     else:
         # Fallback: vanilla selectbox (still session-state aware).
-        method = st.selectbox(
+        # Use a separate widget key to avoid StreamlitAPIException when
+        # st.session_state["method"] is also written programmatically.
+        _sel = st.selectbox(
             label="Method",
             options=METHODS,
             index=METHODS.index(st.session_state["method"]),
             label_visibility="collapsed",
-            key="method",
+            key="method_select_widget",
         )
+        method = _sel
+        st.session_state["method"] = method
 
     # ── Method info card ---------------------------------------------------
     pill_cls, complexity, formula_latex, desc = METHOD_META[method]
@@ -2394,6 +2481,31 @@ if calculate:
                 message=str(exc),
                 traceback=traceback.format_exc(),
             )
+
+# ── Auto-close sidebar on mobile after Calculate ─────────────────────────────
+if calculate:
+    _stc.html(
+        """
+        <script>
+        (function() {
+            try {
+                var pw = window.parent || window;
+                if (pw.innerWidth <= 768) {
+                    var closeBtn = pw.document.querySelector(
+                        '[data-testid="stSidebarCollapseButton"] button'
+                    );
+                    if (closeBtn) { closeBtn.click(); }
+                    setTimeout(function() {
+                        var main = pw.document.querySelector('[data-testid="stMain"]');
+                        if (main) main.scrollTo({top: 0, behavior: 'smooth'});
+                    }, 400);
+                }
+            } catch(e) {}
+        })();
+        </script>
+        """,
+        height=0,
+    )
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  OUTPUT AREA — 3-tab system
