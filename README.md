@@ -1,12 +1,9 @@
 # Advanced Numerical Calculator
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://hue-numerical-methods.streamlit.app/)
-
 > An interactive web dashboard for seven classical numerical-methods algorithms,
 > built on Streamlit + Plotly with animated, lecture-accurate visualisations.
 >
 > **Live Demo:** [hue-numerical-methods.streamlit.app](https://hue-numerical-methods.streamlit.app/)
-
 
 The Advanced Numerical Calculator turns a textbook numerical-methods syllabus
 into a hands-on, browser-based laboratory.  Enter a function or matrix, watch
