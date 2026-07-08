@@ -30,8 +30,6 @@ from __future__ import annotations
 import math
 import re
 import traceback
-from typing import Callable
-
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -46,26 +44,6 @@ except ImportError as exc:
         "Place `calculator.py` in the same directory as `app.py`."
     )
     st.stop()
-
-
-def _compat_widget(widget: Callable) -> Callable:
-    """Allow stretch-based layouts on older Streamlit versions."""
-
-    def wrapped(*args, **kwargs):
-        if kwargs.get("width") == "stretch":
-            kwargs.pop("width", None)
-            try:
-                return widget(*args, use_container_width=True, **kwargs)
-            except TypeError:
-                return widget(*args, **kwargs)
-        return widget(*args, **kwargs)
-
-    return wrapped
-
-
-st.dataframe = _compat_widget(st.dataframe)
-st.data_editor = _compat_widget(st.data_editor)
-st.plotly_chart = _compat_widget(st.plotly_chart)
 
 # Optional dep: streamlit-option-menu powers the elegant sidebar nav.
 # We degrade gracefully to st.radio if the package is absent so the
@@ -2285,7 +2263,7 @@ if "Doolittle" in method or "Gauss" in method:
     df_A_default = _prefill_A(default_A, n)
     edited_A = st.data_editor(
         df_A_default,
-        width="stretch",
+        use_container_width=True,
         hide_index=False,
         num_rows="fixed",
         key=f"editor_A_{method}_{n}",
@@ -2298,7 +2276,7 @@ if "Doolittle" in method or "Gauss" in method:
         df_B_default = _prefill_b(default_B, n)
         edited_B = st.data_editor(
             df_B_default,
-            width="stretch",
+            use_container_width=True,
             hide_index=False,
             num_rows="fixed",
             key=f"editor_B_{method}_{n}",
@@ -2312,7 +2290,7 @@ if "Doolittle" in method or "Gauss" in method:
             df_X0_default.columns = ["x₀"]
             edited_X0 = st.data_editor(
                 df_X0_default,
-                width="stretch",
+                use_container_width=True,
                 hide_index=False,
                 num_rows="fixed",
                 key=f"editor_X0_{method}_{n}",
@@ -2739,20 +2717,20 @@ with tab_steps:
                     L_d, columns=[f"c{i+1}" for i in range(n_d)],
                 )
                 st.dataframe(df_L.style.format("{:.6f}"),
-                             width="stretch")
+                             use_container_width=True)
             with col_u_df:
                 st.markdown("**$U$**")
                 df_U = pd.DataFrame(
                     U_d, columns=[f"c{i+1}" for i in range(n_d)],
                 )
                 st.dataframe(df_U.style.format("{:.6f}"),
-                             width="stretch")
+                             use_container_width=True)
             df_VX = pd.DataFrame({
                 "V (forward sub)":  V_d,
                 "X (back sub)":     X_d,
             })
             st.dataframe(df_VX.style.format("{:.10f}"),
-                         width="stretch")
+                         use_container_width=True)
 
     elif res["kind"] == "gauss_seidel":
         # ── Premium LaTeX-rendered walkthrough for Gauss-Seidel ─────────────
@@ -2854,7 +2832,7 @@ with tab_steps:
             for k, h in enumerate(history_g, start=1):
                 rows.append([str(k)] + [f"{v:.6f}" for v in h])
             df_iter = pd.DataFrame(rows, columns=["Iter"] + cols)
-            st.dataframe(df_iter, width="stretch", hide_index=True)
+            st.dataframe(df_iter, use_container_width=True, hide_index=True)
 
     elif res["kind"] == "false_position":
         # ── Premium LaTeX walkthrough for False Position (Regula Falsi) ─────
@@ -2997,7 +2975,7 @@ with tab_steps:
                     "f(xₙ)": "{:+.2e}",
                     "|xₙ − xₙ₋₁|": lambda v: "—" if v is None or pd.isna(v) else f"{v:.2e}",
                 }),
-                width="stretch",
+                use_container_width=True,
                 hide_index=True,
             )
 
@@ -3119,7 +3097,7 @@ with tab_steps:
                     "f′(xₙ)":  "{:+.6f}",
                     "|xₙ − xₙ₋₁|": lambda v: "—" if v is None or pd.isna(v) else f"{v:.2e}",
                 }),
-                width="stretch",
+                use_container_width=True,
                 hide_index=True,
             )
 
@@ -3302,7 +3280,7 @@ with tab_steps:
                     {c: "{:.4f}" for c in df_diff.columns},
                     na_rep="—",
                 ),
-                width="stretch",
+                use_container_width=True,
             )
 
     elif res["kind"] == "interpolation" and "Stirling" in res["algo"]:
@@ -3520,7 +3498,7 @@ with tab_steps:
                     {c: "{:.4f}" for c in df_diff.columns},
                     na_rep="—",
                 ),
-                width="stretch",
+                use_container_width=True,
             )
 
     elif res["kind"] == "interpolation" and "Lagrange" in res["algo"]:
@@ -3704,7 +3682,7 @@ with tab_steps:
                     "L_i(x)":      "{:+.10f}",
                     "y_i · L_i":   "{:+.10f}",
                 }),
-                width="stretch",
+                use_container_width=True,
                 hide_index=True,
             )
 
@@ -3724,7 +3702,7 @@ with tab_steps:
                     c: "{:.4e}" for c in ["Error", "|f(c)|"]
                     if c in iter_df.columns
                 }),
-                width="stretch",
+                use_container_width=True,
             )
 
         # Difference table for interpolation
@@ -3737,7 +3715,7 @@ with tab_steps:
                     {c: "{:.5f}" for c in df_diff.columns},
                     na_rep="—",
                 ),
-                width="stretch",
+                use_container_width=True,
             )
 
 
@@ -3752,7 +3730,7 @@ with tab_vis:
     else:
         fig = res.get("fig")
         if fig is not None:
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No visualisation available for this method.")
 
