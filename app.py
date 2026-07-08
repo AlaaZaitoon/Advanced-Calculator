@@ -73,19 +73,6 @@ hide_style = """
     """
 st.markdown(hide_style, unsafe_allow_html=True)
 
-st.markdown(
-    """
-    <style>
-    [data-testid="stSidebar"] {
-        min-width: 400px !important;
-        max-width: 400px !important;
-        width: 400px !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 # ══════════════════════════════════════════════════════════════════════════════
 #  GLOBAL CSS — polishes Streamlit's native dark theme
 # ══════════════════════════════════════════════════════════════════════════════
@@ -122,6 +109,8 @@ st.markdown(
         --err           : #F87171;
         --shadow-soft   : 0 1px 2px rgba(0,0,0,0.30), 0 4px 14px rgba(0,0,0,0.18);
         --shadow-card   : 0 1px 2px rgba(0,0,0,0.35), 0 8px 28px rgba(0,0,0,0.28);
+        --anc-sidebar-width: 25rem;   /* 400px — stable sidebar on desktop/tablet */
+        --anc-sidebar-width-mobile: 100vw;
     }
 
     /* ── Base styles (Mobile default — no query) ── */
@@ -236,6 +225,27 @@ st.markdown(
         border-right: 1px solid var(--border-soft);
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        flex-shrink: 0 !important;
+    }
+    /* Lock sidebar width so collapse/reopen never shrinks it. */
+    [data-testid="stSidebar"][aria-expanded="true"] {
+        min-width: var(--anc-sidebar-width-mobile) !important;
+        max-width: var(--anc-sidebar-width-mobile) !important;
+        width: var(--anc-sidebar-width-mobile) !important;
+    }
+    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+        min-width: var(--anc-sidebar-width-mobile) !important;
+        max-width: var(--anc-sidebar-width-mobile) !important;
+        width: var(--anc-sidebar-width-mobile) !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    [data-testid="stSidebar"] .nav,
+    [data-testid="stSidebar"] .nav-link {
+        width: 100% !important;
+        white-space: nowrap;
     }
     [data-testid="stSidebar"] .stSelectbox label,
     [data-testid="stSidebar"] .stSlider label,
@@ -631,12 +641,6 @@ st.markdown(
 
     /* ── Mobile only: below 768px ── */
     @media (max-width: 767px) {
-        /* Sidebar takes full screen width on mobile */
-        [data-testid="stSidebar"] {
-            width: 100% !important;
-            max-width: 100%;
-        }
-
         /* Stack all columns vertically in the main area */
         [data-testid="stMain"] [data-testid="stHorizontalBlock"] {
             flex-wrap: wrap !important;
@@ -704,8 +708,18 @@ st.markdown(
 
     /* ── Tablet: 768px and up ── */
     @media (min-width: 768px) {
-        [data-testid="stSidebar"] {
-            width: auto !important;
+        :root {
+            --anc-sidebar-width-mobile: var(--anc-sidebar-width);
+        }
+        [data-testid="stSidebar"][aria-expanded="true"],
+        [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+            min-width: var(--anc-sidebar-width) !important;
+            max-width: var(--anc-sidebar-width) !important;
+            width: var(--anc-sidebar-width) !important;
+        }
+        [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
+            width: var(--anc-sidebar-width) !important;
+            margin-left: calc(-1 * var(--anc-sidebar-width)) !important;
         }
         [data-testid="stMain"] .block-container,
         .main .block-container {
