@@ -1,7 +1,7 @@
 name: Sync to Hugging Face Hub
 on:
   push:
-    branches: [main] # لو الفرع الرئيسي عندك اسمه master غيره لـ master
+    branches: [main]
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -15,4 +15,3 @@ jobs:
           github_repo_id: ${{ github.repository }}
           huggingface_repo_id: 3Alaaa/advanced-numerical-calculator
           hf_token: ${{ secrets.HF_TOKEN }}
-          space_sdk: streamlit
