@@ -64,6 +64,15 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+hide_style = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    </style>
+    """
+st.markdown(hide_style, unsafe_allow_html=True)
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  GLOBAL CSS — polishes Streamlit's native dark theme
 # ══════════════════════════════════════════════════════════════════════════════
