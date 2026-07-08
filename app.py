@@ -68,7 +68,6 @@ hide_style = """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     </style>
     """
 st.markdown(hide_style, unsafe_allow_html=True)
@@ -137,48 +136,42 @@ st.markdown(
         visibility: hidden !important; 
     }
 
-    /* Force the Header to be structural but invisible and pass through clicks */
+    /* Keep header transparent but visible so the expand button works. */
     header[data-testid="stHeader"] {
         background: transparent !important;
         pointer-events: none !important;
-    }
-    
-    /* Ensure children of the header can still be clicked */
-    header[data-testid="stHeader"] * {
-        pointer-events: auto !important;
+        visibility: visible !important;
     }
 
-    /* Force the Open Arrow to be visible, clickable, and on top of everything */
-    [data-testid="collapsedControl"] {
+    /* Sidebar toggle buttons — Streamlit 1.38+ uses these test ids. */
+    [data-testid="stExpandSidebarButton"],
+    [data-testid="stSidebarCollapseButton"] {
         visibility: visible !important;
         display: flex !important;
         opacity: 1 !important;
         pointer-events: auto !important;
-        position: fixed !important;
-        top: 0.625rem;
-        left: 0.625rem;
         z-index: 1000000 !important;
         min-width: 48px;
         min-height: 48px;
         align-items: center;
         justify-content: center;
+    }
+    [data-testid="stExpandSidebarButton"] button,
+    [data-testid="stSidebarCollapseButton"] button {
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+    [data-testid="stExpandSidebarButton"] {
+        position: fixed !important;
+        top: 0.625rem;
+        left: 0.625rem;
         background: rgba(11, 18, 32, 0.92);
         border-radius: 0.625rem;
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         border: 1px solid var(--border-soft);
         box-shadow: var(--shadow-soft);
-    }
-
-    /* Ensure the Close Arrow inside the sidebar is also visible */
-    [data-testid="stSidebarCollapseButton"] {
-        visibility: visible !important;
-        display: flex !important;
-        z-index: 1000000 !important;
-        min-width: 48px;
-        min-height: 48px;
-        align-items: center;
-        justify-content: center;
     }
 
     /* ── Main content padding & subtle fade-in ───────────────────────── */
@@ -227,16 +220,10 @@ st.markdown(
         -webkit-overflow-scrolling: touch;
         flex-shrink: 0 !important;
     }
-    /* Lock sidebar width so collapse/reopen never shrinks it. */
+    /* Lock expanded sidebar width; let Streamlit handle collapse via transform. */
     [data-testid="stSidebar"][aria-expanded="true"] {
         min-width: var(--anc-sidebar-width-mobile) !important;
         max-width: var(--anc-sidebar-width-mobile) !important;
-        width: var(--anc-sidebar-width-mobile) !important;
-    }
-    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-        min-width: var(--anc-sidebar-width-mobile) !important;
-        max-width: var(--anc-sidebar-width-mobile) !important;
-        width: var(--anc-sidebar-width-mobile) !important;
     }
     [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
         width: 100% !important;
@@ -711,15 +698,9 @@ st.markdown(
         :root {
             --anc-sidebar-width-mobile: var(--anc-sidebar-width);
         }
-        [data-testid="stSidebar"][aria-expanded="true"],
-        [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+        [data-testid="stSidebar"][aria-expanded="true"] {
             min-width: var(--anc-sidebar-width) !important;
             max-width: var(--anc-sidebar-width) !important;
-            width: var(--anc-sidebar-width) !important;
-        }
-        [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-            width: var(--anc-sidebar-width) !important;
-            margin-left: calc(-1 * var(--anc-sidebar-width)) !important;
         }
         [data-testid="stMain"] .block-container,
         .main .block-container {
