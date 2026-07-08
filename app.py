@@ -47,6 +47,26 @@ except ImportError as exc:
     )
     st.stop()
 
+
+def _compat_widget(widget: Callable) -> Callable:
+    """Allow stretch-based layouts on older Streamlit versions."""
+
+    def wrapped(*args, **kwargs):
+        if kwargs.get("width") == "stretch":
+            kwargs.pop("width", None)
+            try:
+                return widget(*args, use_container_width=True, **kwargs)
+            except TypeError:
+                return widget(*args, **kwargs)
+        return widget(*args, **kwargs)
+
+    return wrapped
+
+
+st.dataframe = _compat_widget(st.dataframe)
+st.data_editor = _compat_widget(st.data_editor)
+st.plotly_chart = _compat_widget(st.plotly_chart)
+
 # Optional dep: streamlit-option-menu powers the elegant sidebar nav.
 # We degrade gracefully to st.radio if the package is absent so the
 # app still runs in a bare environment.
