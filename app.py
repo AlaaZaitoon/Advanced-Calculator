@@ -73,6 +73,19 @@ hide_style = """
     """
 st.markdown(hide_style, unsafe_allow_html=True)
 
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"] {
+        min-width: 400px !important;
+        max-width: 400px !important;
+        width: 400px !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  GLOBAL CSS — polishes Streamlit's native dark theme
 # ══════════════════════════════════════════════════════════════════════════════
