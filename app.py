@@ -2205,7 +2205,7 @@ with st.sidebar:
 
     # ── Calculate button
     st.markdown("<br>", unsafe_allow_html=True)
-    calculate = st.button("▶  Calculate", type="primary", width="stretch")
+    calculate = st.button("▶  Calculate", type="primary", use_container_width=True)
 
     st.markdown(
         '<div class="anc-footer">v2.1 · Streamlit Edition</div>',
