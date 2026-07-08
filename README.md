@@ -1,3 +1,15 @@
+---
+title: Advanced Numerical Calculator
+emoji: 🧮
+colorFrom: blue
+colorTo: purple
+sdk: streamlit
+sdk_version: "1.36"
+python_version: "3.10"
+app_file: app.py
+pinned: false
+---
+
 # Advanced Numerical Calculator
 
 > An interactive web dashboard for seven classical numerical-methods algorithms,
